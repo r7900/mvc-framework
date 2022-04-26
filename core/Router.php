@@ -83,13 +83,14 @@ class Router
 
     public static function printRoutes()
     {
-        foreach (self::$routes  as $routName => &$rout) {
+        foreach (self::$routes  as $routeUrl => &$route) {
             echo "<pre>";
             //echo 'Number :' . $key . '<br>';
-            echo 'route name: <strong>' . $routName . '</strong><br>';
+            echo 'route url: <strong>' . $routeUrl . '</strong><br>';
+            echo 'route name: <strong>' . $route['name'] . '</strong><br>';
             //echo 'route Controller :' . $rout['Controller'] . '<br>';
-            echo 'request method: ' . $rout['reqMethod'] . '<br>';
-            echo 'route target: ' . $rout['target'] . '<br>';
+            echo 'request method: ' . $route['reqMethod'] . '<br>';
+            echo 'route target: ' . $route['target'] . '<br>';
             echo 'route params: ';
             print_r(self::$params);
             echo '<br>';
