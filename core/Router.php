@@ -17,14 +17,15 @@ class Router
 
     /**
      *  @param string $method GET,POST 
-     *  @param string $rout
+     *  @param string $routeUrl
      *  @param string $params 2 strings seperated with '@' i.e "ControllerClass@targetMethod" for routing to a method inside a controller. or 1 string without '@' i.e "viewFile" for routing directly to view
      *  @param string $routeName name of the route [optional]
      */
-    public static function add($method, $rout, $target, $routeName = '')
+    public static function add($method, $routeUrl, $target, $routeName = '')
     {
-        $route = trim($rout, '/');
-        self::$routes[$rout] = [
+        $route = trim($routeUrl, '/');
+        self::$routes[] = [
+            'url' => $routeUrl,
             'reqMethod' => $method,
             'target' => $target,
             'name' => $routeName
@@ -34,8 +35,8 @@ class Router
     {
         self::$url = trim($_GET['url'] ?? '', '/');
         self::$url = $_GET['url'] ?? '/';
-        foreach (self::$routes  as $routeUrl => &$route) {
-            $regex = str_replace('/', '\/', $routeUrl);
+        foreach (self::$routes as &$route) {
+            $regex = str_replace('/', '\/', $route['url']);
             $regex = preg_replace('/{(.+?)}/', '(?<${1}>[^\/]+)', $regex);
             $regex = '/^' . $regex . '\/??$/';
             if (preg_match($regex, self::$url, $matchs)) {
@@ -83,10 +84,10 @@ class Router
 
     public static function printRoutes()
     {
-        foreach (self::$routes  as $routeUrl => &$route) {
+        foreach (self::$routes as &$route) {
             echo "<pre>";
             //echo 'Number :' . $key . '<br>';
-            echo 'route url: <strong>' . $routeUrl . '</strong><br>';
+            echo 'route url: <strong>' . $route['url'] . '</strong><br>';
             echo 'route name: <strong>' . $route['name'] . '</strong><br>';
             //echo 'route Controller :' . $rout['Controller'] . '<br>';
             echo 'request method: ' . $route['reqMethod'] . '<br>';
