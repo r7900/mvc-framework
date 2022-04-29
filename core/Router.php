@@ -56,21 +56,21 @@ class Router
     }
     public static function dispatch()
     {
-        $matchedRout = self::match();
-        if ($matchedRout) {
-            $pos = strpos($matchedRout['target'], '@');
+        $matchedRoute = self::match();
+        if ($matchedRoute) {
+            $pos = strpos($matchedRoute['target'], '@');
             if (!$pos) {
-                \Core\View::render($matchedRout['target']);
+                \Core\View::render($matchedRoute['target']);
             } else {
-                $controller = substr($matchedRout['target'], 0, $pos);
-                $method = substr($matchedRout['target'], $pos + 1);
+                $controller = substr($matchedRoute['target'], 0, $pos);
+                $method = substr($matchedRoute['target'], $pos + 1);
                 //echo 'Controller: ' . $controller . ", Method: " . $method . '<br>';
                 $classname = "App\\Controllers\\" . $controller;
                 //$classname = str_replace('/','\\',"App\\Controllers\\".$controller);
                 if (!class_exists($classname)) {
                     throw new \RuntimeException('Controller class "' . $controller . "\" doesn't exist !!!");
                 }
-                $controllerClass = new $classname(self::$params, $matchedRout['reqMethod']);
+                $controllerClass = new $classname(self::$params, $matchedRoute['reqMethod']);
                 if (!method_exists($controllerClass, $method)) {
                     throw new \RuntimeException("Method " . $method . " in Controller class " . $controller . " not exist !!!");
                 }
@@ -109,10 +109,10 @@ class Router
      * @param string $routName name that given in add method to route
      * @return string|bool return route url if route has name otherwise 0 
      */
-    public static function getRout($routName)
+    public static function getRoute($routeName)
     {
         foreach (self::$routes  as $routeUrl => &$route) {
-            if ($route['name'] == $routName) {
+            if ($route['name'] == $routeName) {
                 return $routeUrl;
             }
         }
