@@ -23,9 +23,8 @@ class Router
      */
     public static function add($method, $routeUrl, $target, $routeName = '')
     {
-        $route = trim($routeUrl, '/');
         self::$routes[] = [
-            'url' => $routeUrl,
+            'url' => trim($routeUrl, '/'),
             'reqMethod' => $method,
             'target' => $target,
             'name' => $routeName
@@ -60,6 +59,9 @@ class Router
         if ($matchedRoute) {
             $pos = strpos($matchedRoute['target'], '@');
             if (!$pos) {
+                if ($matchedRoute['reqMethod'] == 'POST')
+                    throw new \Exception("POST requests needs controller!");
+
                 \Core\View::render($matchedRoute['target']);
             } else {
                 $controller = substr($matchedRoute['target'], 0, $pos);
