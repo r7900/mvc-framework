@@ -10,18 +10,7 @@ spl_autoload_register(function ($classname) {
     include str_replace('\\', '/', '../' . $classname . '.php');
 });
 
-use Core\Router;
-
-
-
-Router::add('GET', '/', "HomeController@index", 'Home');
-Router::add('GET', 'user/{id}', "User@Login");
-
-//Router::printRoutes();
-
-Router::dispatch();
-
-
+require_once "../app/route.php";
 
 //echo "<pre>";
 //print_r($_GET);
