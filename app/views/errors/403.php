@@ -5,12 +5,12 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 error</title>
+    <title>Forbidden Request</title>
 </head>
 
 <body>
     <?php
-    echo "<h2>Page not Found</h2>";
+    echo "<h2>Forbidden Request</h2>";
     ?>
 </body>
 

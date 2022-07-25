@@ -17,8 +17,7 @@ abstract class Controller
         if (self::isPost($method)) {
             session_start();
             if (!self::authWebCsrf()) {
-                exit('invalid request');
-                // \Core\View::error403();
+                \Core\View::error403();
             }
         }
     }

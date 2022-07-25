@@ -105,7 +105,7 @@ class Router
                 call_user_func([$controllerClass, $method]);
             }
         } else {
-            \Core\View::NotFound404();
+            \Core\View::error404();
         }
     }
 
