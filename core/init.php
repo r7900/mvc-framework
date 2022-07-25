@@ -13,6 +13,4 @@ spl_autoload_register(function ($classname) {
 */
 require_once "../app/route.php";
 
-//echo "<pre>";
-//print_r($_GET);
-//echo "</pre>";
+Core\Router::dispatch();

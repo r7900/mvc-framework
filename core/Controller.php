@@ -2,7 +2,6 @@
 
 namespace Core;
 
-use Core\View;
 use Core\Session;
 
 abstract class Controller
@@ -15,14 +14,25 @@ abstract class Controller
         $this->requestMethod = $method;
 
 
-        if ($method == 'POST') {
+        if (self::isPost($method)) {
             session_start();
-            if (!self::auth_csrf()) {
+            if (!self::authWebCsrf()) {
                 exit('invalid request');
+                // \Core\View::error403();
             }
         }
     }
-    private static function auth_csrf()
+
+    /**
+     * return true if method is post,put,delete,patch
+     */
+    public static function isPost(&$method): bool
+    {
+        if ($method === 'POST' || $method === 'PUT' || $method === 'DELETE' || $method === 'PATCH')
+            return true;
+        return false;
+    }
+    private static function authWebCsrf()
     {
         if (!Session::has('_token') || !isset($_POST['_token'])) {
             return false;
@@ -33,10 +43,10 @@ abstract class Controller
         return true;
     }
 
-
     protected function csrfToken($expireTime = 5 * 60)
     {
         $token = bin2hex(random_bytes(32));
+        // header('X-CSRF-TOKEN: ' . $token, 1);
         Session::set('_token', $token);
         Session::set('token_expire', time() + $expireTime);
         return $token;

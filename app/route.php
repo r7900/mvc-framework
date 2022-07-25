@@ -4,13 +4,10 @@ use Core\Router;
 
 
 
-Router::add('GET', '/', "HomeController@index", 'Home');
-Router::add('POST', '/', "HomeController@test", 'Home');
+$route = Router::add('GET', '/', "HomeController@index")->name('home_page');
 
+Router::get('/test', function () {
+    echo 'test';
+});
 
 // Router::printRoutes();
-
-Router::add('GET', 'user/{id}', "User@Login");
-
-
-Router::dispatch();

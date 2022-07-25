@@ -2,11 +2,7 @@
 
 namespace Core;
 
-require_once "View.php";
-require_once "Controller.php";
-//require_once "../app/controllers/HomeController.php";
-
-//use Core\View;
+use Core\Route;
 
 class Router
 {
@@ -16,30 +12,52 @@ class Router
     private static $url;
 
     /**
-     *  @param string $method GET,POST 
+     *  @param string $method Request method
      *  @param string $routeUrl
-     *  @param string $params 2 strings seperated with '@' i.e "ControllerClass@targetMethod" for routing to a method inside a controller. or 1 string without '@' i.e "viewFile" for routing directly to view
-     *  @param string $routeName name of the route [optional]
+     *  @param mixed $target 
+     * string: 2 strings seperated with '@' i.e "ControllerClass@targetMethod" for routing to a method inside a controller. or 1 string without '@' i.e "viewFile" for routing directly to view
+     * 
+     * Closure: An anonymous function that will call instead of calling controller .
      */
-    public static function add($method, $routeUrl, $target, $routeName = '')
+    public static function add(string $method, string $routeUrl, mixed $target)
     {
-        self::$routes[] = [
-            'url' => trim($routeUrl, '/'),
-            'reqMethod' => $method,
-            'target' => $target,
-            'name' => $routeName
-        ];
+        $route = new Route($method, $routeUrl, $target);
+        self::$routes[] = $route;
+
+        return $route;
     }
+
+    public static function get(string $routeUrl, mixed $target)
+    {
+        return self::add('GET', $routeUrl, $target);
+    }
+    public static function post(string $routeUrl, mixed $target)
+    {
+        return self::add('POST', $routeUrl, $target);
+    }
+    public static function put(string $routeUrl, mixed $target)
+    {
+        return self::add('PUT', $routeUrl, $target);
+    }
+    public static function delete(string $routeUrl, mixed $target)
+    {
+        return self::add('DELETE', $routeUrl, $target);
+    }
+    public static function patch(string $routeUrl, mixed $target)
+    {
+        return self::add('PATCH', $routeUrl, $target);
+    }
+
     public static function match()
     {
         self::$url = trim($_GET['url'] ?? '', '/');
         self::$url = $_GET['url'] ?? '/';
         foreach (self::$routes as &$route) {
-            $regex = str_replace('/', '\/', $route['url']);
+            $regex = str_replace('/', '\/', $route->url);
             $regex = preg_replace('/{(.+?)}/', '(?<${1}>[^\/]+)', $regex);
             $regex = '/^' . $regex . '\/??$/';
             if (preg_match($regex, self::$url, $matchs)) {
-                if ($_SERVER['REQUEST_METHOD'] != $route['reqMethod']) {
+                if ($_SERVER['REQUEST_METHOD'] !== $route->method) {
                     continue;
                 }
                 foreach ($matchs as $key => &$match) {
@@ -57,24 +75,32 @@ class Router
     {
         $matchedRoute = self::match();
         if ($matchedRoute) {
-            $pos = strpos($matchedRoute['target'], '@');
-            if (!$pos) {
-                if ($matchedRoute['reqMethod'] == 'POST')
-                    throw new \Exception("POST requests needs controller!");
+            if ($matchedRoute->target instanceof \Closure) {
+                if (Controller::isPost($matchedRoute->method)) {
+                    throw new \RuntimeException("POST requests need controller !");
+                }
+                ($matchedRoute->target)();
+                exit();
+            }
+            $pos = strpos($matchedRoute->target, '@');
 
-                \Core\View::render($matchedRoute['target']);
+            if (!$pos) {
+                if (Controller::isPost($matchedRoute->method)) {
+                    throw new \RuntimeException("POST requests need controller !");
+                }
+                \Core\View::render($matchedRoute->target);
             } else {
-                $controller = substr($matchedRoute['target'], 0, $pos);
-                $method = substr($matchedRoute['target'], $pos + 1);
-                //echo 'Controller: ' . $controller . ", Method: " . $method . '<br>';
+                $controller = substr($matchedRoute->target, 0, $pos);
+                $method = substr($matchedRoute->target, $pos + 1);
                 $classname = "App\\Controllers\\" . $controller;
-                //$classname = str_replace('/','\\',"App\\Controllers\\".$controller);
+
                 if (!class_exists($classname)) {
                     throw new \RuntimeException('Controller class "' . $controller . "\" doesn't exist !!!");
                 }
-                $controllerClass = new $classname(self::$params, $matchedRoute['reqMethod']);
+                $controllerClass = new $classname(self::$params, $matchedRoute->method);
+
                 if (!method_exists($controllerClass, $method)) {
-                    throw new \RuntimeException("Method " . $method . " in Controller class " . $controller . " not exist !!!");
+                    throw new \RuntimeException("'" . $method . "' method in '" . $controller . "' Controller class " . " doesn't exist !!!");
                 }
                 call_user_func([$controllerClass, $method]);
             }
@@ -83,17 +109,14 @@ class Router
         }
     }
 
-
     public static function printRoutes()
     {
         foreach (self::$routes as &$route) {
             echo "<pre>";
-            //echo 'Number :' . $key . '<br>';
-            echo 'route url: <strong>' . $route['url'] . '</strong><br>';
-            echo 'route name: <strong>' . $route['name'] . '</strong><br>';
-            //echo 'route Controller :' . $rout['Controller'] . '<br>';
-            echo 'request method: ' . $route['reqMethod'] . '<br>';
-            echo 'route target: ' . $route['target'] . '<br>';
+            echo 'route url: <strong>' . $route->url . '</strong><br>';
+            echo 'route name: <strong>' . $route->name . '</strong><br>';
+            echo 'request method: ' . $route->method . '<br>';
+            echo 'route target: ' . ($route->target instanceof \Closure ? 'closure' : $route->target) . '<br>';
             echo 'route params: ';
             print_r(self::$params);
             echo '<br>';
@@ -101,7 +124,7 @@ class Router
         }
     }
 
-    public static function getroutes()
+    public static function getRoutes()
     {
         return self::$routes;
     }
@@ -111,30 +134,13 @@ class Router
      * @param string $routName name that given in add method to route
      * @return string|bool return route url if route has name otherwise 0 
      */
-    public static function getRoute($routeName)
+    public static function getRouteName(string $routeName)
     {
         foreach (self::$routes  as $routeUrl => &$route) {
-            if ($route['name'] == $routeName) {
+            if ($route->name === $routeName) {
                 return $routeUrl;
             }
         }
         return 0;
     }
-    private function __construct()
-    {
-        echo "consructor ran";
-        $routes = [];
-    }
-    /*
-    public static function getRouter()
-    {
-        if (!static::$router){
-            static::$router = new static;
-            //echo 'router initialized '.'<br>';
-        }else
-            //echo 'router was initialized '.'<br>';
-
-        return static::$router;
-    }
-    */
 };
