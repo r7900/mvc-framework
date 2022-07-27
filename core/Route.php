@@ -20,7 +20,7 @@ class Route
     public string $name = '';
     private array $middlewares = [];
 
-    public function __construct(string $method, string $routeUrl, string|\Closure $target, bool $isApi = false)
+    public function __construct(string $method, string $routeUrl, string|\Closure $target, string $name = '', bool $isApi = false)
     {
         $this->method = strtoupper($method);
         $this->url = trim($routeUrl, '/');
@@ -28,6 +28,7 @@ class Route
             $this->url = 'api/' . $this->url;
         }
         $this->target = $target;
+        $this->name = $name;
     }
 
     public function name(string $name): Route

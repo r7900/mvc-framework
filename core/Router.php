@@ -4,20 +4,24 @@ namespace Core;
 
 use Core\Route;
 
-class Router
+final class Router
 {
 
     private static $routes;
     private static $params;
     private static $url;
 
-    private static function route(string $method, string &$routeUrl, mixed &$target)
+    private function __construct()
+    {
+    }
+
+    private static function route(string $method, string &$routeUrl, mixed &$target, string $name = '')
     {
         $file = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['file'];
         $file = explode('/', $file);
         $file = rtrim(array_pop($file), '.php');
 
-        $route = new Route($method, $routeUrl, $target, $file === 'api');
+        $route = new Route($method, $routeUrl, $target, $name, $file === 'api');
         self::$routes[] = $route;
 
         return $route;
@@ -152,6 +156,27 @@ class Router
         }
     }
 
+    /**
+     * @param string|array $middleware name of the route middleware or an array of middlewares names
+     * @param array $routes an asocciative array whcich keys are methods names and values are arrays with url,target,name,middlewares  
+     * 
+     * i.e. 'get' => [$url,$target,$name = '',$middlewares = null]
+     */
+    public static function middlewareGroup(string|array $middleware, array $routes)
+    {
+        foreach ($routes as $method => &$route) {
+            if (is_array($middleware)) {
+                $middlewares = array_values($middleware);
+            } else {
+                $middlewares[] = $middleware;
+            }
+
+            if (isset($route[3]))
+                $middlewares[] = $route[3];
+            self::route($method, $route[0], $route[1], $route[2] ?? '')->middleware($middlewares);
+            unset($middlewares);
+        }
+    }
     public static function printRoutes()
     {
         foreach (self::$routes as &$route) {
