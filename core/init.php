@@ -11,6 +11,7 @@ spl_autoload_register(function ($classname) {
     include str_replace('\\', '/', '../' . $classname . '.php');
 });
 */
-require_once "../app/route.php";
+require_once "../app/routes/web.php";
+require_once "../app/routes/api.php";
 
 Core\Router::dispatch();

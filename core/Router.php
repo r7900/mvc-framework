@@ -11,6 +11,17 @@ class Router
     private static $params;
     private static $url;
 
+    private static function route(string $method, string &$routeUrl, mixed &$target)
+    {
+        $file = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['file'];
+        $file = explode('/', $file);
+        $file = rtrim(array_pop($file), '.php');
+
+        $route = new Route($method, $routeUrl, $target, $file === 'api');
+        self::$routes[] = $route;
+
+        return $route;
+    }
     /**
      *  @param string $method Request method
      *  @param string $routeUrl
@@ -21,34 +32,31 @@ class Router
      */
     public static function add(string $method, string $routeUrl, mixed $target)
     {
-        $route = new Route($method, $routeUrl, $target);
-        self::$routes[] = $route;
-
-        return $route;
+        return self::route($method, $routeUrl, $target);
     }
 
     public static function get(string $routeUrl, mixed $target)
     {
-        return self::add('GET', $routeUrl, $target);
+        return self::route('GET', $routeUrl, $target);
     }
     public static function post(string $routeUrl, mixed $target)
     {
-        return self::add('POST', $routeUrl, $target);
+        return self::route('POST', $routeUrl, $target);
     }
     public static function put(string $routeUrl, mixed $target)
     {
-        return self::add('PUT', $routeUrl, $target);
+        return self::route('PUT', $routeUrl, $target);
     }
     public static function delete(string $routeUrl, mixed $target)
     {
-        return self::add('DELETE', $routeUrl, $target);
+        return self::route('DELETE', $routeUrl, $target);
     }
     public static function patch(string $routeUrl, mixed $target)
     {
-        return self::add('PATCH', $routeUrl, $target);
+        return self::route('PATCH', $routeUrl, $target);
     }
 
-    public static function match()
+    private static function match()
     {
         self::$url = trim($_GET['url'] ?? '', '/');
         self::$url = $_GET['url'] ?? '/';
@@ -148,7 +156,7 @@ class Router
     {
         foreach (self::$routes as &$route) {
             echo "<pre>";
-            echo 'route url: <strong>' . $route->url . '</strong><br>';
+            echo 'route url: <strong>' . ($route->url === '' ? '/' : $route->url) . '</strong><br>';
             echo 'route name: <strong>' . $route->name . '</strong><br>';
             echo 'request method: ' . $route->method . '<br>';
             echo 'route target: ' . ($route->target instanceof \Closure ? 'closure' : $route->target) . '<br>';
