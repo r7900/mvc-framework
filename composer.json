@@ -3,7 +3,9 @@
         "psr-4": {
             "Core\\":"core/",
             "App\\Controllers\\":"app/controllers",
-            "App\\Model\\":"app/models"
+            "App\\Model\\":"app/models",
+            "App\\Middlewares\\Global\\":"app/middlewares/global",
+            "App\\Middlewares\\Route\\":"app/middlewares/route"
         }
     }
 }

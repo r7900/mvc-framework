@@ -18,6 +18,7 @@ class Route
      */
     public string|\Closure $target;
     public string $name = '';
+    private array $middlewares = [];
 
     public function __construct(string $method, string $routeUrl, string|\Closure $target)
     {
@@ -31,5 +32,29 @@ class Route
         $this->name = $name;
 
         return $this;
+    }
+
+    /**
+     * @param array|string $value Name of the route middleware class (located in app/middlewares/route/) or an array of middlewares
+     */
+    public function middleware($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as &$middleware) {
+                $this->middlewares[] = 'App\\Middlewares\\Route\\' . $middleware;
+            }
+            return $this;
+        }
+        $this->middlewares[] = 'App\\Middlewares\\Route\\' . $value;
+
+        return $this;
+    }
+
+    /**
+     * @return array $this->middlewares
+     */
+    public function getMiddlewares()
+    {
+        return $this->middlewares;
     }
 }

@@ -39,7 +39,7 @@ class View
             extract($data);
             require_once($path);
             // ob_get_flush();
-            exit();
+            // exit();
         } else {
             throw new \RuntimeException('View "' . $viewPath . '.php" does not exist !!!');
         }

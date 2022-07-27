@@ -75,12 +75,14 @@ class Router
     {
         $matchedRoute = self::match();
         if ($matchedRoute) {
+            self::handleBeforeMiddlewares($matchedRoute);
             if ($matchedRoute->target instanceof \Closure) {
                 if (Controller::isPost($matchedRoute->method)) {
                     throw new \RuntimeException("POST requests need controller !");
                 }
                 ($matchedRoute->target)();
-                exit();
+                self::handleAfterMiddlewares($matchedRoute);
+                return;
             }
             $pos = strpos($matchedRoute->target, '@');
 
@@ -104,8 +106,41 @@ class Router
                 }
                 call_user_func([$controllerClass, $method]);
             }
+            self::handleAfterMiddlewares($matchedRoute);
         } else {
             \Core\View::error404();
+        }
+    }
+
+    private static function handleBeforeMiddlewares(Route &$route)
+    {
+        foreach (Middleware::$globalMiddlewares as $gm) {
+            if (!class_exists($gm)) {
+                throw new \RuntimeException("global middleware '" . $gm . "' doesn't exist  in '/App/middlewares/global/' !!!");
+            }
+            call_user_func([$gm, 'before']);
+        }
+        foreach ($route->getMiddlewares() as $m) {
+            if (!class_exists($m)) {
+                throw new \RuntimeException("route middleware '" . $m . "' doesn't exist  in '/App/middlewares/route/' !!!");
+            }
+            call_user_func([$m, 'before']);
+        }
+    }
+
+    private static function handleAfterMiddlewares(Route &$route)
+    {
+        foreach (Middleware::$globalMiddlewares as $gm) {
+            if (!class_exists($gm)) {
+                throw new \RuntimeException("global middleware '" . $gm . "' doesn't exist  in '/App/middlewares/global/' !!!");
+            }
+            call_user_func([$gm, 'after']);
+        }
+        foreach ($route->getMiddlewares() as $m) {
+            if (!class_exists($m)) {
+                throw new \RuntimeException("route middleware '" . $m . "' doesn't exist  in '/App/middlewares/global/' !!!");
+            }
+            call_user_func([$m, 'after']);
         }
     }
 
@@ -117,6 +152,7 @@ class Router
             echo 'route name: <strong>' . $route->name . '</strong><br>';
             echo 'request method: ' . $route->method . '<br>';
             echo 'route target: ' . ($route->target instanceof \Closure ? 'closure' : $route->target) . '<br>';
+            echo 'route middlewares: ' . implode(',', $route->getMiddlewares()) . '<br>';
             echo 'route params: ';
             print_r(self::$params);
             echo '<br>';
@@ -134,11 +170,11 @@ class Router
      * @param string $routName name that given in add method to route
      * @return string|bool return route url if route has name otherwise 0 
      */
-    public static function getRouteName(string $routeName)
+    public static function getRouteName(string $name)
     {
-        foreach (self::$routes  as $routeUrl => &$route) {
-            if ($route->name === $routeName) {
-                return $routeUrl;
+        foreach (self::$routes  as &$route) {
+            if ($route->name === $name) {
+                return $route->url === '' ? '/' : $route->url;
             }
         }
         return 0;
